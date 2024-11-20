@@ -124,20 +124,20 @@ function result = getAlpha(week, day)
     result = alpha_prime*proportion;
 end
 
-% Function to smooth alpha
-function result = smoothAlphaPrime(week, alphaPrime)
-    %parameters
-    smoothedPrime = alphaPrime;
-if(week <= 4)
-    smoothedPrime = alphaPrime+((-1)^week)*((1/4)*(15+(5*(week-2.5)^2)));
-elseif (week>=8 && week<=10)
-    smoothedPrime = alphaPrime+((-1)^(floor((week-8)/2))*(44/28));
-elseif(week>=12)
-    smoothedPrime = alphaPrime+((1/4)*(-1)^(week-10)*(-1)^(floor((week-12)/2))*10);
-end
+% Function to smooth alpha NOT USED
+%function result = smoothAlphaPrime(week, alphaPrime)
+ %   %parameters
+ %   smoothedPrime = alphaPrime;
+%if(week <= 4)
+%    smoothedPrime = alphaPrime+((-1)^week)*((1/4)*(15+(5*(week-2.5)^2)));
+%elseif (week>=8 && week<=10)
+ %   smoothedPrime = alphaPrime+((-1)^(floor((week-8)/2))*(44/28));
+%elseif(week>=12)
+ %   smoothedPrime = alphaPrime+((1/4)*(-1)^(week-10)*(-1)^(floor((week-12)/2))*10);
+%end
 
-result = smoothedPrime;
-end
+%result = smoothedPrime;
+%end
 
 %function to compute errors over the weeks
 function [modelOne_perT, modelOne_perD, modelOne_perW, modelTwo_perT, modelTwo_perD, modelTwo_perW] = getErrorsOverTheWeeks(dataTable)
