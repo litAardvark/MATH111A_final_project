@@ -10,11 +10,9 @@ clc;            % Clear command window
 close all;      % Close all figure windows
 
 %% Main Script
-% Example inputs
 filename = 'data_simplified.csv';
 dataTable = readtable(filename, 'ReadVariableNames', false);
 
-% Call functions
 %analyze_by_week(1, dataTable);
 [modelOneT, modelOneD, modelOneW, modelTwoT, modelTwoD, modelTwoW] = getErrorsOverTheWeeks(dataTable);
 
@@ -38,7 +36,6 @@ hold off;
 % plotError(getErrors(getWeek(selectedWeek, dataTable), getModelTwoWeek(selectedWeek)));
 
 
-%% Function Definitions
 % Function to get data for a given week
 function result = getWeek(w, dataTable)
     if(w < 1 || w > 15)
@@ -192,7 +189,7 @@ function result = plotError(error)
     hold off;
 end
 
-%Function to get model output for given week
+%Function to get model one output for given week
 function result = getModelOneWeek(week)
     result_table = table();
     numRows = 4;
@@ -213,7 +210,7 @@ function result = getModelOneWeek(week)
     result = result_table;
 end
 
-%Function to get model output for given week
+%Function to get model two output for given week
 function result = getModelTwoWeek(week)
     result_table = table();
     numRows = 4;
