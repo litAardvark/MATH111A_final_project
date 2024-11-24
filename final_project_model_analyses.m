@@ -10,32 +10,36 @@ clc;            % Clear command window
 close all;      % Close all figure windows
 
 %% Main Script
+% Example inputs
 filename = 'data_simplified.csv';
 dataTable = readtable(filename, 'ReadVariableNames', false);
 
-%analyze_by_week(1, dataTable);
-[modelOneT, modelOneD, modelOneW, modelTwoT, modelTwoD, modelTwoW] = getErrorsOverTheWeeks(dataTable);
+% Call functions
+% %analyze_by_week(1, dataTable);
+% [modelOneT, modelOneD, modelOneW, modelTwoT, modelTwoD, modelTwoW] = getErrorsOverTheWeeks(dataTable);
+% 
+% %%
+% % Plot results
+% figure;
+% % plot(modelOneT, 'b-', 'LineWidth', 2);
+% % hold on;
+% plot(modelTwoT, 'r-', 'LineWidth', 2);
+% grid on;
+% hold off;
+% 
+% figure;
+% % plot(modelOneD, 'b-', 'LineWidth', 2);
+% % hold on;
+% plot(modelTwoD, 'r-', 'LineWidth', 2);
+% grid on;
+% hold off;
+% %
+ selectedWeek = 14;
+ plotOutput(getModelTwoWeek(selectedWeek), getWeek(selectedWeek, dataTable), selectedWeek);
+ plotError(getErrors(getWeek(selectedWeek, dataTable), getModelTwoWeek(selectedWeek)), selectedWeek);
+ 
 
-%%
-% Plot results
-figure;
-plot(modelOneT, 'b-', 'LineWidth', 2);
-hold on;
-plot(modelTwoT, 'r-', 'LineWidth', 2);
-grid on;
-hold off;
-
-figure;
-plot(modelOneW, 'b-', 'LineWidth', 2);
-hold on;
-plot(modelTwoW, 'r-', 'LineWidth', 2);
-grid on;
-hold off;
-%%
-% selectedWeek = 15;
-% plotError(getErrors(getWeek(selectedWeek, dataTable), getModelTwoWeek(selectedWeek)));
-
-
+%% Function Definitions
 % Function to get data for a given week
 function result = getWeek(w, dataTable)
     if(w < 1 || w > 15)
@@ -78,6 +82,21 @@ function result = R_in(week, day, time)
     result = timeCount;
 end
 
+
+% Function to compute R_in
+function result = R_in_piecewise(week, day, time)
+    t = time-1; %time is the nth hour the Center is open
+    [alpha_prime, beta] = getAlpha(week, day);
+    if t<3
+        result = (alpha_prime/6)*((-1/pi)*cos(t*pi/2)+t+((pi+1)/pi));
+    else
+        result = (alpha_prime/24)*((-10/pi)*cos((t-3)*pi/2)+(2*(t-3))+((16*pi+14)/pi));
+    end
+    
+end
+
+
+
 % Function to compute R_out
 function result = R_out(week, day, time)
     t = time-1; %time is the nth hour the Center is open
@@ -88,7 +107,8 @@ end
 
 % Function to compute R_in
 function result = model_two_compute(week, day, time)
-    result = round(R_in(week, day, time)-R_out(week, day, time));
+    %result = round(R_in(week, day, time)-R_out(week, day, time));
+    result = round(R_in_piecewise(week, day, time)-R_out(week, day, time));
     if(result<0)
         result = 0;
     end
@@ -96,7 +116,7 @@ end
 
 
 % Function to compute alpha
-function result = getAlpha(week, day)
+function [alpha_prime, beta] = getAlpha(week, day)
     %parameters
     pct = 0.08;
     AvgCsz = 26;
@@ -106,7 +126,7 @@ function result = getAlpha(week, day)
     w = week;
     d = day; %day is the nth
     %alpha_prime = smoothAlphaPrime(w, (3*cos(d*pi)+AvgNumClasses));
-    alpha_prime = 3*cos(d*pi)+AvgNumClasses;
+    beta = 3*cos(d*pi)+AvgNumClasses;
     if (w == 8)
         pct = pct*wk8f;
     elseif (w<8)
@@ -118,23 +138,23 @@ function result = getAlpha(week, day)
     end
 
     proportion = pct*AvgCsz;
-    result = alpha_prime*proportion;
+    alpha_prime = beta*proportion;
 end
 
-% Function to smooth alpha NOT USED
-%function result = smoothAlphaPrime(week, alphaPrime)
- %   %parameters
- %   smoothedPrime = alphaPrime;
-%if(week <= 4)
-%    smoothedPrime = alphaPrime+((-1)^week)*((1/4)*(15+(5*(week-2.5)^2)));
-%elseif (week>=8 && week<=10)
- %   smoothedPrime = alphaPrime+((-1)^(floor((week-8)/2))*(44/28));
-%elseif(week>=12)
- %   smoothedPrime = alphaPrime+((1/4)*(-1)^(week-10)*(-1)^(floor((week-12)/2))*10);
-%end
+% Function to smooth alpha
+function result = smoothAlphaPrime(week, alphaPrime)
+    %parameters
+    smoothedPrime = alphaPrime;
+if(week <= 4)
+    smoothedPrime = alphaPrime+((-1)^week)*((1/4)*(15+(5*(week-2.5)^2)));
+elseif (week>=8 && week<=10)
+    smoothedPrime = alphaPrime+((-1)^(floor((week-8)/2))*(44/28));
+elseif(week>=12)
+    smoothedPrime = alphaPrime+((1/4)*(-1)^(week-10)*(-1)^(floor((week-12)/2))*10);
+end
 
-%result = smoothedPrime;
-%end
+result = smoothedPrime;
+end
 
 %function to compute errors over the weeks
 function [modelOne_perT, modelOne_perD, modelOne_perW, modelTwo_perT, modelTwo_perD, modelTwo_perW] = getErrorsOverTheWeeks(dataTable)
@@ -172,9 +192,21 @@ for w=1:15
 end
 end
 
+
+% customColors = [0 0.4470 0.7410;    % Blue
+%                 0.8500 0.3250 0.0980; % Red
+%                 0.9290 0.6940 0.1250; % Yellow
+%                 0.4940 0.1840 0.5560; % Purple
+%                 0.4660 0.6740 0.1880; % Green
+%                 0.3010 0.7450 0.9330; % Cyan
+%                 0.6350 0.0780 0.1840]; % Dark Red
+% set(groot, 'defaultAxesColorOrder', customColors);
+% repeatedColors = [customColors; customColors];
+
 %Function to plot errors by week
-function result = plotError(error)
+function result = plotError(error, selectedWeek)
     figure;
+    
     resultRow = zeros(1,6);
     plot(resultRow);
     hold on;
@@ -183,13 +215,60 @@ function result = plotError(error)
         for j=1:6
             resultRow(j) = temp.(j);
         end
-        plot(resultRow);
+        plot(resultRow, 'LineWidth', 1.5);
     end
 
     hold off;
+    ax = gca;
+    ax.XTickLabel = {'0', '1', '2', '3', '4', '5'};
+    titleString = ['week', ' ', num2str(selectedWeek), ' ', 'error'];
+    title(titleString);
+    legend('', 'Mon', 'Tue', 'Wed', 'Thu', 'Location', 'best');
+    xlabel('t');
+    ylabel('error');
+
 end
 
-%Function to get model one output for given week
+%Function to plot outpu by week
+function result = plotOutput(model, data, selectedWeek)
+    modelRow = zeros(1,6);
+    dataRow = zeros(1,6);
+    figure; 
+    customColors = [0 0.4470 0.7410;    % Blue
+                0.8500 0.3250 0.0980; % Red
+                0.9290 0.6940 0.1250; % Yellow
+                0.4940 0.1840 0.5560; % Purple
+                0.4660 0.6740 0.1880; % Green
+                0.3010 0.7450 0.9330; % Cyan
+                0.6350 0.0780 0.1840]; % Dark Red
+    repeatedColors = [customColors; customColors];
+    ax = gca;
+    plot(modelRow);
+    hold on;
+
+    for i=1:4
+        tempMod = model(i, :);
+        tempDat = data(i,:);
+        for j=1:6
+            modelRow(j) = tempMod.(j);
+            dataRow(j) = tempDat.(j);
+        end
+        ci = i+1;
+        plot(modelRow, 'Color', repeatedColors(ci, : ), 'LineWidth', 2);
+        plot(dataRow, 'Color', repeatedColors(ci+7, : ), 'LineWidth', 2, 'LineStyle',':');
+    end
+    hold off;
+    ax = gca;
+    ax.XTickLabel = {'0', '1', '2', '3', '4', '5'};
+    titleString = ['week', ' ', num2str(selectedWeek), ' ', 'model vs data'];
+    title(titleString);
+    legend('', 'Mon (model)', 'Mon (data)', 'Tue (model)', 'Tue (data)', 'Wed (model)', 'Wed (data)', 'Thu (model)', 'Thu (data)', 'Location', 'best');
+    xlabel('t');
+    ylabel('count');
+
+end
+
+%Function to get model output for given week
 function result = getModelOneWeek(week)
     result_table = table();
     numRows = 4;
@@ -210,7 +289,7 @@ function result = getModelOneWeek(week)
     result = result_table;
 end
 
-%Function to get model two output for given week
+%Function to get model output for given week
 function result = getModelTwoWeek(week)
     result_table = table();
     numRows = 4;
